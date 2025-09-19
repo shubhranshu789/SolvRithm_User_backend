@@ -108,20 +108,53 @@ router.delete('/projects/:id', async (req, res) => {
 // });
 
 
+// router.post("/projects/:projectId/add-student", async (req, res) => {
+//   try {
+//     const { studentId } = req.body;
+
+//     if (!studentId) {
+//       return res.status(400).json({ error: "studentId is required" });
+//     }
+
+//     // ✅ Add student to project
+//     const project = await Project.findByIdAndUpdate(
+//       req.params.projectId,
+//       { $addToSet: { students: studentId } }, // avoids duplicate entries
+//       { new: true }
+//     ).populate("students");
+
+//     if (!project) {
+//       return res.status(404).json({ error: "Project not found" });
+//     }
+
+//     // ✅ Add project to student
+//     await Student.findByIdAndUpdate(
+//       studentId,
+//       { $addToSet: { projects: req.params.projectId } }, // avoids duplicate projects
+//       { new: true }
+//     );
+
+//     res.json({ message: "Student enrolled successfully", project });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: "Server error" });
+//   }
+// });
+
 router.post("/projects/:projectId/add-student", async (req, res) => {
   try {
-    const { studentId } = req.body;
+    const { studentId, githubLink } = req.body;
 
     if (!studentId) {
       return res.status(400).json({ error: "studentId is required" });
     }
 
-    // ✅ Add student to project
+    // ✅ Add student to project (with optional githubLink)
     const project = await Project.findByIdAndUpdate(
       req.params.projectId,
-      { $addToSet: { students: studentId } }, // avoids duplicate entries
+      { $addToSet: { students: { student: studentId, githubLink } } },
       { new: true }
-    ).populate("students");
+    ).populate("students.student");
 
     if (!project) {
       return res.status(404).json({ error: "Project not found" });
@@ -130,7 +163,7 @@ router.post("/projects/:projectId/add-student", async (req, res) => {
     // ✅ Add project to student
     await Student.findByIdAndUpdate(
       studentId,
-      { $addToSet: { projects: req.params.projectId } }, // avoids duplicate projects
+      { $addToSet: { projects: req.params.projectId } },
       { new: true }
     );
 
@@ -140,7 +173,6 @@ router.post("/projects/:projectId/add-student", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
 
 
 

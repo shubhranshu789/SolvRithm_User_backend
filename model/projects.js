@@ -40,7 +40,8 @@ const projectSchema = new mongoose.Schema({
   students: [
     {
       student: { type: mongoose.Schema.Types.ObjectId, ref: "STUDENT" },
-      githubLink: { type: String }  // 🔥 link per student per project
+      githubLink: { type: String },  // 🔥 link per student per project
+      approved: { type: Boolean, default: false }
     }
   ]
 }, { timestamps: true }); 
