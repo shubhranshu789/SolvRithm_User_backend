@@ -12,7 +12,7 @@ const {Jwt_secret} = require("../keys");
 
 
 router.post("/signup" , (req,res)=> {
-    const {password ,email , name,uniRoll ,member1 , member2,member3,member4} = req.body;
+    const {password ,email , name,uniRoll ,member1 , member2,member3,member4 , phone , state , city , pincode} = req.body;
     const ip = req.headers['cf-connecting-ip'] ||
                 req.headers['x-real-ip'] ||
                 req.headers['x-forwarded-for'] ||
@@ -21,7 +21,7 @@ router.post("/signup" , (req,res)=> {
     
     console.log(name , uniRoll , member1 , member2 , member3);
 
-    if(!password ||!email || !name || !member1 || !uniRoll){
+    if(!password ||!email || !name || !member1 || !uniRoll || !phone || !state || !city || !pincode){
         return res.status(422).json({error : "Please add all the fields"})
     }
 
@@ -38,6 +38,10 @@ router.post("/signup" , (req,res)=> {
                 ip,
                 name,
                 uniRoll,
+                phone,
+                state,
+                city,
+                pincode,
                 Member1 : member1,
                 Member2 : member2,
                 Member3 : member3,
