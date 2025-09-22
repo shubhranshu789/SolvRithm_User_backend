@@ -35,15 +35,32 @@ router.post("/projects", requireLogin, async (req, res) => {
 });
 
 // 👉 Get all projects
+// router.get("/projects", async (req, res) => {
+//   try {
+//     const projects = await Project.find().sort({ createdAt: -1 }); // latest first
+//     res.json(projects);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: "Server error" });
+//   }
+// });
+
+
 router.get("/projects", async (req, res) => {
   try {
-    const projects = await Project.find().sort({ createdAt: -1 }); // latest first
+    const now = new Date();
+
+    const projects = await Project.find({
+      dueDate: { $gt: now }   // ✅ only projects with due date still remaining
+    }).sort({ createdAt: -1 });
+
     res.json(projects);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 // 👉 Get single project by ID
 router.get("/projects/:id", async (req, res) => {
@@ -141,6 +158,40 @@ router.delete('/projects/:id', async (req, res) => {
 //   }
 // });
 
+// router.post("/projects/:projectId/add-student", async (req, res) => {
+//   try {
+//     const { studentId, githubLink } = req.body;
+
+//     if (!studentId) {
+//       return res.status(400).json({ error: "studentId is required" });
+//     }
+
+//     // ✅ Add student to project (with optional githubLink)
+//     const project = await Project.findByIdAndUpdate(
+//       req.params.projectId,
+//       { $addToSet: { students: { student: studentId, githubLink } } },
+//       { new: true }
+//     ).populate("students.student");
+
+//     if (!project) {
+//       return res.status(404).json({ error: "Project not found" });
+//     }
+
+//     // ✅ Add project to student
+//     await Student.findByIdAndUpdate(
+//       studentId,
+//       { $addToSet: { projects: req.params.projectId } },
+//       { new: true }
+//     );
+
+//     res.json({ message: "Student enrolled successfully", project });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: "Server error" });
+//   }
+// });
+
+
 router.post("/projects/:projectId/add-student", async (req, res) => {
   try {
     const { studentId, githubLink } = req.body;
@@ -149,21 +200,30 @@ router.post("/projects/:projectId/add-student", async (req, res) => {
       return res.status(400).json({ error: "studentId is required" });
     }
 
-    // ✅ Add student to project (with optional githubLink)
-    const project = await Project.findByIdAndUpdate(
-      req.params.projectId,
-      { $addToSet: { students: { student: studentId, githubLink } } },
-      { new: true }
-    ).populate("students.student");
+    // Find the project
+    const project = await Project.findById(req.params.projectId);
 
     if (!project) {
       return res.status(404).json({ error: "Project not found" });
     }
 
-    // ✅ Add project to student
+    // ✅ Check if student already exists
+    const alreadyExists = project.students.some(
+      (s) => s.student.toString() === studentId
+    );
+
+    if (alreadyExists) {
+      return res.status(400).json({ error: "Student already enrolled" });
+    }
+
+    // ✅ Add new student
+    project.students.push({ student: studentId, githubLink });
+    await project.save();
+
+    // ✅ Update student’s projects array
     await Student.findByIdAndUpdate(
       studentId,
-      { $addToSet: { projects: req.params.projectId } },
+      { $addToSet: { projects: req.params.projectId } }, // here $addToSet works fine
       { new: true }
     );
 
@@ -173,6 +233,7 @@ router.post("/projects/:projectId/add-student", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 
 
